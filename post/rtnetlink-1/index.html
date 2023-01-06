@@ -1,0 +1,1336 @@
+<!DOCTYPE html><html lang="en-us" >
+
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  
+  
+  
+    <meta name="generator" content="Wowchemy 5.4.0 for Hugo" />
+  
+
+  
+  
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+
+  
+  
+  
+    
+      
+      <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono&family=Roboto:wght@400;700&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono&family=Roboto:wght@400;700&display=swap" media="print" onload="this.media='all'">
+    
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="Rohan Tiwari" />
+
+  
+  
+  
+    
+  
+  <meta name="description" content="A tutorial with code on how to fetch queueing discipline stats from kernel using RTNETLINK." />
+
+  
+  <link rel="alternate" hreflang="en-us" href="https://rohantwr.github.io/post/rtnetlink-1/" />
+
+  
+  
+  
+    <meta name="theme-color" content="#1565c0" />
+  
+
+  
+  
+    
+    <script src="/js/mathjax-config.js"></script>
+  
+
+  
+
+  <link rel="stylesheet" href="/css/vendor-bundle.min.f1ecf783c14edc00c9320c205831ad8e.css" media="print" onload="this.media='all'">
+
+  
+  
+  
+    
+    
+
+    
+    
+    
+    
+      
+      
+    
+    
+    
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/styles/github.min.css" crossorigin="anonymous" title="hl-light" media="print" onload="this.media='all'">
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark" media="print" onload="this.media='all'" disabled>
+        
+      
+    
+
+    
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.min.css" integrity="" crossorigin="anonymous" media="print" onload="this.media='all'">
+    
+
+    
+
+    
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" integrity="" crossorigin="anonymous" async></script>
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+  
+
+  
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/wowchemy.46aef3b9145f495105bfe3e5cdf2990e.css" />
+
+  
+
+
+
+  
+
+  
+
+  
+
+
+
+
+  
+  
+  
+
+  
+
+  
+    <link rel="manifest" href="/manifest.webmanifest" />
+  
+
+  <link rel="icon" type="image/png" href="/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_32x32_fill_lanczos_center_3.png" />
+  <link rel="apple-touch-icon" type="image/png" href="/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_180x180_fill_lanczos_center_3.png" />
+
+  <link rel="canonical" href="https://rohantwr.github.io/post/rtnetlink-1/" />
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+    
+  
+  
+
+  
+  
+    
+    
+  
+  <meta property="twitter:card" content="summary" />
+  
+  <meta property="og:site_name" content="Rohan Tiwari" />
+  <meta property="og:url" content="https://rohantwr.github.io/post/rtnetlink-1/" />
+  <meta property="og:title" content="RTNETLINK 1: Fetching queueing discipline stats | Rohan Tiwari" />
+  <meta property="og:description" content="A tutorial with code on how to fetch queueing discipline stats from kernel using RTNETLINK." /><meta property="og:image" content="https://rohantwr.github.io/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_512x512_fill_lanczos_center_3.png" />
+    <meta property="twitter:image" content="https://rohantwr.github.io/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_512x512_fill_lanczos_center_3.png" /><meta property="og:locale" content="en-us" />
+  
+    
+      <meta
+        property="article:published_time"
+        content="2019-06-17T00:00:00&#43;00:00"
+      />
+    
+    <meta property="article:modified_time" content="2019-06-17T00:00:00&#43;00:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+  
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rohantwr.github.io/post/rtnetlink-1/"
+  },
+  "headline": "RTNETLINK 1: Fetching queueing discipline stats",
+  
+  "datePublished": "2019-06-17T00:00:00Z",
+  "dateModified": "2019-06-17T00:00:00Z",
+  
+  "author": {
+    "@type": "Person",
+    "name": "Rohan Tiwari"
+  },
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rohan Tiwari",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rohantwr.github.io/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_192x192_fill_lanczos_center_3.png"
+    }
+  },
+  "description": "A tutorial with code on how to fetch queueing discipline stats from kernel using RTNETLINK."
+}
+</script>
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+  <title>RTNETLINK 1: Fetching queueing discipline stats | Rohan Tiwari</title>
+</head>
+
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" class="page-wrapper   " data-wc-page-id="0522055309998167e0c244ee0e47024c" >
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <script src="/js/wowchemy-init.min.13d3c1ccc66961c64e937f4e854fdd1e.js"></script>
+
+  
+
+
+<aside class="search-modal" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#" aria-label="Close"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search" class="form-control"
+        aria-label="Search...">
+        
+      </div>
+
+      
+      
+
+      
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+
+  <div class="page-header">
+    
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="header--fixed">
+  <nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+    <div class="container-xl">
+
+      
+      <div class="d-none d-lg-inline-flex">
+        <a class="navbar-brand" href="/">Rohan Tiwari</a>
+      </div>
+      
+
+      
+      <button type="button" class="navbar-toggler" data-toggle="collapse"
+              data-target="#navbar-content" aria-controls="navbar-content" aria-expanded="false" aria-label="Toggle navigation">
+      <span><i class="fas fa-bars"></i></span>
+      </button>
+      
+
+      
+      <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+        <a class="navbar-brand" href="/">Rohan Tiwari</a>
+      </div>
+      
+
+      
+      
+      <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+        
+        <ul class="navbar-nav d-md-inline-flex">
+          
+
+          
+
+          
+          
+          
+            
+          
+
+          
+
+          
+          
+          
+          
+
+          
+            
+              
+              
+            
+            
+              
+              
+              
+                
+              
+              
+            
+          
+
+          <li class="nav-item">
+            <a class="nav-link " href="/#about"><span>About</span></a>
+          </li>
+
+          
+          
+
+          
+
+          
+          
+          
+            
+          
+
+          
+
+          
+          
+          
+          
+
+          
+            
+              
+              
+            
+            
+              
+              
+              
+                
+              
+              
+            
+          
+
+          <li class="nav-item">
+            <a class="nav-link " href="/#contact"><span>Contact</span></a>
+          </li>
+
+          
+          
+
+          
+
+          
+          
+          
+            
+          
+
+          
+
+          
+          
+          
+          
+
+          
+            
+              
+              
+            
+            
+          
+
+          <li class="nav-item">
+            <a class="nav-link " href="/uploads/cv.pdf"><span>Resume</span></a>
+          </li>
+
+          
+          
+
+        
+
+          
+        </ul>
+      </div>
+
+      <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+
+        
+        
+          
+        
+
+        
+        
+        <li class="nav-item">
+          <a class="nav-link js-search" href="#" aria-label="Search"><i class="fas fa-search" aria-hidden="true"></i></a>
+        </li>
+        
+
+        
+        
+        <li class="nav-item dropdown theme-dropdown">
+          <a href="#" class="nav-link" data-toggle="dropdown" aria-haspopup="true" aria-label="Display preferences">
+            <i class="fas fa-moon" aria-hidden="true"></i>
+          </a>
+          <div class="dropdown-menu">
+            <a href="#" class="dropdown-item js-set-theme-light">
+              <span>Light</span>
+            </a>
+            <a href="#" class="dropdown-item js-set-theme-dark">
+              <span>Dark</span>
+            </a>
+            <a href="#" class="dropdown-item js-set-theme-auto">
+              <span>Automatic</span>
+            </a>
+          </div>
+        </li>
+        
+
+        
+        
+
+      </ul>
+
+    </div>
+  </nav>
+</header>
+
+
+  </div>
+
+  <div class="page-body">
+    <article class="article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1>RTNETLINK 1: Fetching queueing discipline stats</h1>
+
+  
+
+  
+    
+
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    Jun 17, 2019
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    7 min read
+  </span>
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+  
+  <span class="middot-divider"></span>
+  <span class="article-categories">
+    <i class="fas fa-folder mr-1"></i><a href="/category/linux/">Linux</a></span>
+  
+
+</div>
+
+    
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style">
+      <p>Link to source code: <a href="https://github.com/sbhTWR/qdisc_stats/" target="_blank" rel="noopener">qdisc_stats</a></p>
+<p>This article mainly focuses on the implementation part of using RTNETLINK to fetch queueing discipline statistics from the kernel. There are many good articles that cover basics of NETLINK and RTNETLINK in detail. Few of them are listed at the end of this article.</p>
+<h2 id="rtnetlink">RTNETLINK</h2>
+<p>RTNETLINK is an extension of NETLINK that allows userspace applications to manipulate linux&rsquo;s networking stack which is located in the kernel. Userspace applications can fetch routing information and modify kernels internel routing table using RTNETLINK. I came accross RTNETLINK while working with Open vSwitch (OVS). OVS uses RTNETLINK for communication between its userspace process vswitchd and its kernel module (called datapath). OVS also uses it to fetch queueing discipline statistics from the kernel and to modify them.</p>
+<h2 id="implementation">Implementation</h2>
+<p>While working on a project on SDN, I needed to extend the functionality of OVS so as to provide us with queueing discipline stats that we need. For this purpose I read a lot of articles on NETLINK and RTNETLINK, but I couldn&rsquo;t find any which explained how to communicate with Traffic Controller (tc). Since iproute2 is a userspace utility that does exactly what I needed (it queries kernel using RTNETLINK to fetch stats), I thought of figuring it out by reading its source code. Consequently, a lot of code that I am going to present in this article is inspired by <a href="https://github.com/shemminger/iproute2">iproute2 </a>.</p>
+<h3 id="netlink-socket">Netlink socket</h3>
+<p><a href="https://github.com/torvalds/linux/blob/9e0babf2c06c73cda2c0cd37a1653d823adb40ec/include/uapi/linux/netlink.h#L37" target="_blank" rel="noopener">&lt;linux/rtnetlink.h&gt;</a></p>
+<pre><code class="language-c">/* defined in &lt;linux/rtnetlink.h&gt; */
+
+ struct sockaddr_nl {
+    __kernel_sa_family_t    nl_family;  /* AF_NETLINK	*/
+    unsigned short          nl_pad;     /* zero		*/
+    __u32                   nl_pid;     /* port ID	*/
+    __u32                   nl_groups;  /* multicast groups mask */
+ }
+</code></pre>
+<h3 id="message-format">Message format</h3>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<figure  id="figure-fig-1-request-message-format">
+  <div class="d-flex justify-content-center">
+    <div class="w-100" ><img src="../../uploads/req_msg_format.png" alt="Request message format" loading="lazy" data-zoomable /></div>
+  </div><figcaption>
+      Fig 1. Request message format
+    </figcaption></figure>
+</p>
+<p>Netlink message header is represented by <code>struct nlmsghdr</code> (given below). <code>nlmsg_len</code> is <code>sizeof(struct nlmsghdr) + sizeof(message struct)</code>. Choice of message struct depends on the type of message that we are creating. In our case we are requesting the queueing discipline details, so the appropriate struct is <code>struct tcmsg</code> (given below). So for us <code>nlmsglen = sizeof(struct nlmsghdr) + sizeof(struct tcmsg)</code>.
+<br><br>
+<code>nlmsg_type</code> describes the type of message, which in our case is <code>RTM_GETQDISC</code>. A detailed documentation about the types of messages and their respective flags is given <a href="http://man7.org/linux/man-pages/man7/rtnetlink.7.html" target="_blank" rel="noopener">here</a>.
+<br><br>
+<code>nlmsg_flags</code> are flags which furthur describe the message, for example whether it is a dump request or not. In our case, due to a bug in the kernel, we are going to create a dump request (This will be explained later in the post) <code>nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST</code>.<br>
+<br><br>
+<code>nlmsg_seq</code> yet to research more about this. (I have not completed the networking course yet!).
+<br><br>
+<code>nlmsg_pid</code> is the netlink PID of the process sending the message. I kept this empty, and it worked. I still need to figure out more about it!</p>
+<p><a href="https://github.com/torvalds/linux/blob/9e0babf2c06c73cda2c0cd37a1653d823adb40ec/include/uapi/linux/netlink.h#L44" target="_blank" rel="noopener">&lt;linux/netlink.h&gt;</a></p>
+<pre><code class="language-c">/* defined in &lt;linux/netlink.h&gt; */  
+
+struct nlmsghdr {
+	__u32		nlmsg_len;	/* Length of message including header */
+	__u16		nlmsg_type;	/* Message content */
+	__u16		nlmsg_flags;	/* Additional flags */
+	__u32		nlmsg_seq;	/* Sequence number */
+	__u32		nlmsg_pid;	/* Sending process port ID */
+};
+</code></pre>
+<p>We are done creating the netlink message header. Our next task is to create the message content using <code>struct tcmsg</code> (given below for reference).
+<br><br>
+<code>tcm_family</code> is traffic controller message family, described in <a href="https://github.com/torvalds/linux/blob/master/include/linux/socket.h" target="_blank" rel="noopener">sockets.h</a>.
+In our case it is equal to <code>AF_UNSPEC</code>. I couldn&rsquo;t find any documentation related to this address family, but it seems like its Address Family Unspecified - which I assume implies that it is not required in this case. (Will update the post when if I find out. If you happen to know about it, please comment below!).
+<br><br>
+<code>tcm__pad1</code> and <code>tcm__pad2</code> are pads to make sure that data is algined in the memory. This avoids any alignment errors while parsing a received RTNETLINK message. More about it <a href="https://fresh2refresh.com/c-programming/c-structure-padding/" target="_blank" rel="noopener">here</a>.
+<br><br>
+<code>tcm_ifindex</code> is the index of the interface whos queueing discipline information we are requesting. Interface index can be obtained from the interface name using <code>unsigned int if_nametoindex(const char *ifname)</code> defined in <code>net/if.h</code>. Interface name can be obtained from interface index using <code>char *if_indextoname(unsigned int ifindex, char *ifname)</code>. More about these functions <a href="https://linux.die.net/man/3/if_indextoname" target="_blank" rel="noopener">here</a>. Since we are requesting a dump of qdiscs of all the interfaces, this field doesn&rsquo;t matter. To make a qdisc info request for a particular interface, this field needs to be filled in with the interface index of the interface we are requesting for. (This specific request does not work due to a bug in the kernel which will be explained in the post later).</p>
+<p>Example: converting interface name to index and vice-versa:</p>
+<pre><code class="language-c">/* obtain iface index from iface name */
+
+char d[IFNAMSIZ] = {};
+    strncpy(d, &quot;enp7s0&quot;, sizeof(d)-1);
+
+    if (d[0]) {
+        t.tcm_ifindex = if_nametoindex(d);
+}
+
+/* obtain iface name from iface index */
+char d[IFNAMSIZ] = {};
+printf(&quot;dev %s&quot;, if_indextoname(tcrecv-&gt;tcm_ifindex, d));
+</code></pre>
+<br>
+<p><code>tcm_handle</code> and <code>tcm_parent</code> fields are used to make a more specific request, when the queueing discipline attached to the interface(s) is classful. In our case we are making a dump request, so it does not matter for us. Read more about classless and classful queueing disciplines <a href="https://www.tldp.org/HOWTO/Adv-Routing-HOWTO/lartc.qdisc.terminology.html" target="_blank" rel="noopener">here</a>.</p>
+<p><a href="https://github.com/torvalds/linux/blob/9e0babf2c06c73cda2c0cd37a1653d823adb40ec/include/uapi/linux/rtnetlink.h#L552" target="_blank" rel="noopener">&lt;linux/rtnetlink.h&gt;</a></p>
+<pre><code class="language-c">/* defined in &lt;linux/rtnetlink.h&gt; */
+struct tcmsg {
+	unsigned char	tcm_family;
+	unsigned char	tcm__pad1;
+	unsigned short	tcm__pad2;
+	int		tcm_ifindex;
+	__u32		tcm_handle;
+	__u32		tcm_parent;
+/* tcm_block_index is used instead of tcm_parent
+ * in case tcm_ifindex == TCM_IFINDEX_MAGIC_BLOCK
+ */
+#define tcm_block_index tcm_parent
+	__u32		tcm_info;
+};
+</code></pre>
+<p>We are done with the request message. What remains is to create the netlink message header by filling in the fields of <code>struct msghdr</code> (given below).
+<br><br>
+<code>msg_name</code> points to <code>struct sockaddr_nl</code> filled in with the destination address and <code>msg_namelen = sizeof(struct sockaddr_nl)</code>.
+<br><br>
+<code>msg_iov</code> is an array of input/output vectors (called I/O vectors). It is used for reading and writing data from/to buffers which are not neccesarily in contiguous memory locations <a href="https://stackoverflow.com/questions/32593697/understanding-the-msghdr-structure-from-sys-socket-h" target="_blank" rel="noopener">[1]</a>.
+We write netlink message header(struct nlmshhdr) and request message (struct tcmsg) at array index 0 and 1 of <code>iov</code> in the following way:</p>
+<pre><code class="language-c">struct tcmsg t = { .tcm_family = AF_UNSPEC };
+    char d[IFNAMSIZ] = {};
+    strncpy(d, &quot;enp7s0&quot;, sizeof(d)-1);
+
+    if (d[0]) {
+        t.tcm_ifindex = if_nametoindex(d);
+    }
+
+void *req = (void *)&amp;t;
+
+int type = RTM_GETQDISC;
+int len = sizeof(t);
+
+struct nlmsghdr nlh = {
+    .nlmsg_len = NLMSG_LENGTH(len),
+    .nlmsg_type = type,
+    .nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+    .nlmsg_seq = 0,
+};
+
+
+struct iovec iov[2] = {
+    { .iov_base = &amp;nlh, .iov_len = sizeof(nlh) },
+    { .iov_base = req, .iov_len = len }
+};
+</code></pre>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<figure  id="figure-fig-2-diagramatic-representation-filling-in-of-netlink-message-as-an-io-vector-array-of-size-2">
+  <div class="d-flex justify-content-center">
+    <div class="w-100" ><img src="../../uploads/iovec.png" alt="Request message format" loading="lazy" data-zoomable /></div>
+  </div><figcaption>
+      Fig 2. Diagramatic representation: filling in of netlink message as an i/o vector array of size 2
+    </figcaption></figure>
+</p>
+<p><code>msg_iovlen = 2</code>, since it is an array of size 2. Rest of the fields in <code>struct msghdr</code> is not needed for our purpose. If you know what purpose these data fields serve, please comment about it below, and I will add it to the post!</p>
+<pre><code class="language-c">/* defined in &lt;bits/socket.h&gt; */
+
+ /* Structure describing messages sent by
+   `sendmsg' and received by `recvmsg'.  */
+struct msghdr
+  {
+    void *msg_name;		/* Address to send to/receive from.  */
+    socklen_t msg_namelen;	/* Length of address data.  */
+
+    struct iovec *msg_iov;	/* Vector of data to send/receive into.  */
+    size_t msg_iovlen;		/* Number of elements in the vector.  */
+
+    void *msg_control;		/* Ancillary data (eg BSD filedesc passing). */
+    size_t msg_controllen;	/* Ancillary data buffer length.
+				   !! The type should be socklen_t but the
+				   definition of the kernel is incompatible
+				   with this.  */
+
+    int msg_flags;		/* Flags on received message.  */
+  };
+</code></pre>
+<p>We are almost done with creating the message header (<code>struct msghdr</code>). What remains is filling in the fields of <code>struct sockaddr_nl</code> with the destination address (kernel), assign it to <code>msg_name</code> and its size to <code>msg_namelen</code>.</p>
+<pre><code class="language-c">struct sockaddr_nl dst_addr;
+
+    memset(&amp;dst_addr, 0, sizeof(dst_addr));
+    dst_addr.nl_family = AF_NETLINK;
+    dst_addr.nl_pid = 0; /* For linux kernel */
+    dst_addr.nl_groups = 0; /* unicast */
+
+   /* struct msghdr {
+        void *msg_name;        //Address to send to
+        socklen_t msg_namelen; //Length of address data
+        struct iovec *msg_iov; //Vector of data to send
+        size_t msg_iovlen;     //Number of iovec entries
+        void *msg_control;     //Ancillary data
+        size_t msg_controllen; //Ancillary data buf len
+        int msg_flags;         //Flags on received msg
+    };
+*/
+
+    struct msghdr msg = {
+        .msg_name = &amp;dst_addr,
+        .msg_namelen = sizeof(dst_addr),
+        .msg_iov = iov,
+        .msg_iovlen = 2,
+};
+</code></pre>
+<p>We are now ready with our message. All we need to do now is simply send the message through the netlink socket that we created earlier, using <code>sendmsg()</code>:</p>
+<pre><code class="language-c">sendmsg(sock_fd, &amp;msg, 0);
+</code></pre>
+<h3 id="the-no-reply-kernel-bug-or-maybe-bug-in-my-code">The &ldquo;no-reply&rdquo; kernel bug (or maybe bug in my code?)</h3>
+<p>As I said earlier in the post, requesting a specific queueing discipline, there is &ldquo;no reply&rdquo; from the kernel. As such, recvmsg() function enters a blocking state, since no reply is received. Hence, we made a dump request, which works. I am still unsure whether this is because of a problem in my code or because of the bug in the kernel. I tried looking around for a fix, and found out that developers of Open vSwitch had experienced similar problem: <a href="https://mail.openvswitch.org/pipermail/ovs-dev/2015-March/295937.html" target="_blank" rel="noopener">Link</a>. If you find out a bug in my code, feel free to contact me or comment below.</p>
+<p>Link to source code: <a href="https://github.com/sbhTWR/qdisc_stats/" target="_blank" rel="noopener">qdisc_stats</a></p>
+<ol>
+<li><a href="https://stackoverflow.com/questions/32593697/understanding-the-msghdr-structure-from-sys-socket-h" target="_blank" rel="noopener">https://stackoverflow.com/questions/32593697/understanding-the-msghdr-structure-from-sys-socket-h</a></li>
+</ol>
+
+    </div>
+
+    
+
+
+
+
+
+
+<div class="article-tags">
+  
+  <a class="badge badge-light" href="/tag/linux/">Linux</a>
+  
+</div>
+
+
+
+<div class="share-box">
+  <ul class="share">
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://twitter.com/intent/tweet?url=https://rohantwr.github.io/post/rtnetlink-1/&amp;text=RTNETLINK%201:%20Fetching%20queueing%20discipline%20stats" target="_blank" rel="noopener" class="share-btn-twitter" aria-label="twitter">
+          <i class="fab fa-twitter"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.facebook.com/sharer.php?u=https://rohantwr.github.io/post/rtnetlink-1/&amp;t=RTNETLINK%201:%20Fetching%20queueing%20discipline%20stats" target="_blank" rel="noopener" class="share-btn-facebook" aria-label="facebook">
+          <i class="fab fa-facebook"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="mailto:?subject=RTNETLINK%201:%20Fetching%20queueing%20discipline%20stats&amp;body=https://rohantwr.github.io/post/rtnetlink-1/" target="_blank" rel="noopener" class="share-btn-email" aria-label="envelope">
+          <i class="fas fa-envelope"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.linkedin.com/shareArticle?url=https://rohantwr.github.io/post/rtnetlink-1/&amp;title=RTNETLINK%201:%20Fetching%20queueing%20discipline%20stats" target="_blank" rel="noopener" class="share-btn-linkedin" aria-label="linkedin-in">
+          <i class="fab fa-linkedin-in"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="whatsapp://send?text=RTNETLINK%201:%20Fetching%20queueing%20discipline%20stats%20https://rohantwr.github.io/post/rtnetlink-1/" target="_blank" rel="noopener" class="share-btn-whatsapp" aria-label="whatsapp">
+          <i class="fab fa-whatsapp"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://service.weibo.com/share/share.php?url=https://rohantwr.github.io/post/rtnetlink-1/&amp;title=RTNETLINK%201:%20Fetching%20queueing%20discipline%20stats" target="_blank" rel="noopener" class="share-btn-weibo" aria-label="weibo">
+          <i class="fab fa-weibo"></i>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  
+  
+  
+    
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+      
+      <a href="https://rohantwr.github.io/"><img class="avatar mr-3 avatar-circle" src="/author/rohan-tiwari/avatar_hu6a17b47b905a9fc859632ee30e465658_23308_270x270_fill_q75_lanczos_center.jpg" alt="Rohan Tiwari"></a>
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="https://rohantwr.github.io/">Rohan Tiwari</a></h5>
+      <h6 class="card-subtitle">Associate at Postman API Lab</h6>
+      <p class="card-text">My research interests broadly lie in Development using APIs.</p>
+      <ul class="network-icon" aria-hidden="true">
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="/#contact" >
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://github.com/RohanTWR" target="_blank" rel="noopener">
+        <i class="fab fa-github"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://www.linkedin.com/in/rohan-tiwari-a5b588200/" target="_blank" rel="noopener">
+        <i class="fab fa-linkedin"></i>
+      </a>
+    </li>
+  
+</ul>
+
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <div class="article-widget content-widget-hr">
+    <h3>Related</h3>
+    <ul>
+      
+      <li><a href="/post/rtnetlink-2/">RTNETLINK 2: Fetching queueing discipline stats</a></li>
+      
+    </ul>
+  </div>
+  
+
+
+
+
+
+  </div>
+</article>
+  </div>
+
+  <div class="page-footer">
+    
+    
+    <div class="container">
+      <footer class="site-footer">
+
+  
+
+
+
+  
+
+  
+
+  
+  <p class="powered-by">
+    © 2023 Rohan Tiwari
+  </p>
+  
+
+  
+  
+
+
+
+
+
+
+  
+</footer>
+
+    </div>
+    
+  </div>
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+      
+
+    
+    <script src="/js/vendor-bundle.min.3d946de2e8784a477845261d87025092.js"></script>
+
+    
+    
+    
+      
+      
+        <script src="https://cdn.jsdelivr.net/gh/desandro/imagesloaded@v4.1.4/imagesloaded.pkgd.min.js" integrity="sha512-S5PZ9GxJZO16tT9r3WJp/Safn31eu8uWrzglMahDT4dsmgqWonRY9grk3j+3tfuPr9WJNsfooOR7Gi7HL5W2jw==" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/gh/metafizzy/isotope@v3.0.6/dist/isotope.pkgd.min.js" integrity="sha512-Zq2BOxyhvnRFXu0+WE6ojpZLOU2jdnqbrM1hmVdGzyeCa1DgM3X5Q4A/Is9xA1IkbUeDd7755dNNI/PzSf2Pew==" crossorigin="anonymous"></script>
+      
+
+      
+      
+
+      
+        <script src="https://cdn.jsdelivr.net/gh/mermaid-js/mermaid@v8.8.4/dist/mermaid.min.js" integrity="sha512-+TNmhaRJf3jyYHTpzEq/5I6b+aGyhzWb21mGdHAjxSGSYwxN9Grug3Y3B9qVxWfKKY8MscE/6mr9walWvFLFvQ==" crossorigin="anonymous" title="mermaid"></script>
+      
+
+      
+        
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/highlight.min.js" integrity="sha512-Ypjm0o7jOxAd4hpdoppSEN0TQOC19UtPAqD+4s5AlXmUvbmmS/YMxYqAqarQYyxTnB6/rqip9qcxlNB/3U9Wdg==" crossorigin="anonymous"></script>
+        
+        
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/languages/r.min.js" crossorigin="anonymous"></script>
+        
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/languages/python.min.js" crossorigin="anonymous"></script>
+        
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/languages/latex.min.js" crossorigin="anonymous"></script>
+        
+      
+
+    
+
+    
+    
+    
+      <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.min.js" integrity="" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+    
+      
+      <script id="search-hit-fuse-template" type="text/x-template">
+        <div class="search-hit" id="summary-{{key}}">
+          <div class="search-hit-content">
+            <div class="search-hit-name">
+              <a href="{{relpermalink}}">{{title}}</a>
+              <div class="article-metadata search-hit-type">{{type}}</div>
+              <p class="search-hit-description">{{snippet}}</p>
+            </div>
+          </div>
+        </div>
+      </script>
+      
+        <script src="https://cdn.jsdelivr.net/gh/krisk/Fuse@v3.2.1/dist/fuse.min.js" integrity="sha512-o38bmzBGX+hD3JHWUFCDA09btWaqrNmoJ3RXLlrysA7PP01Kgs4UlE4MhelE1v5dJR3+cxlR4qQlotsW7jKsnw==" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/gh/julmot/mark.js@8.11.1/dist/jquery.mark.min.js" integrity="sha512-mhbv5DqBMgrWL+32MmsDOt/OAvqr/cHimk6B8y/bx/xS88MVkYGPiVv2ixKVrkywF2qHplNRUvFsAHUdxZ3Krg==" crossorigin="anonymous"></script>
+      
+    
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+      
+      
+      
+      
+      
+      
+      
+    
+
+    
+
+    
+    
+    
+    <script id="page-data" type="application/json">{"use_headroom":true}</script>
+
+    
+    
+      <script src="/js/wowchemy-headroom.208bf5db800f4a4e5a38cf3b67a99a51.js" type="module"></script>
+    
+    
+    
+    
+    
+    
+    
+      
+      
+    
+    
+    <script src="/en/js/wowchemy.min.63639926e24ecfb8040ea052c1077969.js"></script>
+
+    
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+
+
+
+</body>
+</html>

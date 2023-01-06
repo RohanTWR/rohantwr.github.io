@@ -1,0 +1,1221 @@
+<!DOCTYPE html><html lang="en-us" >
+
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  
+  
+  
+    <meta name="generator" content="Wowchemy 5.4.0 for Hugo" />
+  
+
+  
+  
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+
+  
+  
+  
+    
+      
+      <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono&family=Roboto:wght@400;700&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono&family=Roboto:wght@400;700&display=swap" media="print" onload="this.media='all'">
+    
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="Rohan Tiwari" />
+
+  
+  
+  
+    
+  
+  <meta name="description" content="A tutorial with code on how to fetch queueing discipline stats from kernel using RTNETLINK." />
+
+  
+  <link rel="alternate" hreflang="en-us" href="https://rohantwr.github.io/post/rtnetlink-2/" />
+
+  
+  
+  
+    <meta name="theme-color" content="#1565c0" />
+  
+
+  
+  
+    
+    <script src="/js/mathjax-config.js"></script>
+  
+
+  
+
+  <link rel="stylesheet" href="/css/vendor-bundle.min.f1ecf783c14edc00c9320c205831ad8e.css" media="print" onload="this.media='all'">
+
+  
+  
+  
+    
+    
+
+    
+    
+    
+    
+      
+      
+    
+    
+    
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/styles/github.min.css" crossorigin="anonymous" title="hl-light" media="print" onload="this.media='all'">
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark" media="print" onload="this.media='all'" disabled>
+        
+      
+    
+
+    
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.min.css" integrity="" crossorigin="anonymous" media="print" onload="this.media='all'">
+    
+
+    
+
+    
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" integrity="" crossorigin="anonymous" async></script>
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+  
+
+  
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/wowchemy.46aef3b9145f495105bfe3e5cdf2990e.css" />
+
+  
+
+
+
+  
+
+  
+
+  
+
+
+
+
+  
+  
+  
+
+  
+
+  
+    <link rel="manifest" href="/manifest.webmanifest" />
+  
+
+  <link rel="icon" type="image/png" href="/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_32x32_fill_lanczos_center_3.png" />
+  <link rel="apple-touch-icon" type="image/png" href="/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_180x180_fill_lanczos_center_3.png" />
+
+  <link rel="canonical" href="https://rohantwr.github.io/post/rtnetlink-2/" />
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+    
+  
+  
+
+  
+  
+    
+    
+  
+  <meta property="twitter:card" content="summary" />
+  
+  <meta property="og:site_name" content="Rohan Tiwari" />
+  <meta property="og:url" content="https://rohantwr.github.io/post/rtnetlink-2/" />
+  <meta property="og:title" content="RTNETLINK 2: Fetching queueing discipline stats | Rohan Tiwari" />
+  <meta property="og:description" content="A tutorial with code on how to fetch queueing discipline stats from kernel using RTNETLINK." /><meta property="og:image" content="https://rohantwr.github.io/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_512x512_fill_lanczos_center_3.png" />
+    <meta property="twitter:image" content="https://rohantwr.github.io/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_512x512_fill_lanczos_center_3.png" /><meta property="og:locale" content="en-us" />
+  
+    
+      <meta
+        property="article:published_time"
+        content="2019-06-18T00:00:00&#43;00:00"
+      />
+    
+    <meta property="article:modified_time" content="2019-06-18T00:00:00&#43;00:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+  
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rohantwr.github.io/post/rtnetlink-2/"
+  },
+  "headline": "RTNETLINK 2: Fetching queueing discipline stats",
+  
+  "datePublished": "2019-06-18T00:00:00Z",
+  "dateModified": "2019-06-18T00:00:00Z",
+  
+  "author": {
+    "@type": "Person",
+    "name": "Rohan Tiwari"
+  },
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rohan Tiwari",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rohantwr.github.io/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_192x192_fill_lanczos_center_3.png"
+    }
+  },
+  "description": "A tutorial with code on how to fetch queueing discipline stats from kernel using RTNETLINK."
+}
+</script>
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+  <title>RTNETLINK 2: Fetching queueing discipline stats | Rohan Tiwari</title>
+</head>
+
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" class="page-wrapper   " data-wc-page-id="b65eba786af928e575be160d66dce8ef" >
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <script src="/js/wowchemy-init.min.13d3c1ccc66961c64e937f4e854fdd1e.js"></script>
+
+  
+
+
+<aside class="search-modal" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#" aria-label="Close"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search" class="form-control"
+        aria-label="Search...">
+        
+      </div>
+
+      
+      
+
+      
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+
+  <div class="page-header">
+    
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="header--fixed">
+  <nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+    <div class="container-xl">
+
+      
+      <div class="d-none d-lg-inline-flex">
+        <a class="navbar-brand" href="/">Rohan Tiwari</a>
+      </div>
+      
+
+      
+      <button type="button" class="navbar-toggler" data-toggle="collapse"
+              data-target="#navbar-content" aria-controls="navbar-content" aria-expanded="false" aria-label="Toggle navigation">
+      <span><i class="fas fa-bars"></i></span>
+      </button>
+      
+
+      
+      <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+        <a class="navbar-brand" href="/">Rohan Tiwari</a>
+      </div>
+      
+
+      
+      
+      <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+        
+        <ul class="navbar-nav d-md-inline-flex">
+          
+
+          
+
+          
+          
+          
+            
+          
+
+          
+
+          
+          
+          
+          
+
+          
+            
+              
+              
+            
+            
+              
+              
+              
+                
+              
+              
+            
+          
+
+          <li class="nav-item">
+            <a class="nav-link " href="/#about"><span>About</span></a>
+          </li>
+
+          
+          
+
+          
+
+          
+          
+          
+            
+          
+
+          
+
+          
+          
+          
+          
+
+          
+            
+              
+              
+            
+            
+              
+              
+              
+                
+              
+              
+            
+          
+
+          <li class="nav-item">
+            <a class="nav-link " href="/#contact"><span>Contact</span></a>
+          </li>
+
+          
+          
+
+          
+
+          
+          
+          
+            
+          
+
+          
+
+          
+          
+          
+          
+
+          
+            
+              
+              
+            
+            
+          
+
+          <li class="nav-item">
+            <a class="nav-link " href="/uploads/cv.pdf"><span>Resume</span></a>
+          </li>
+
+          
+          
+
+        
+
+          
+        </ul>
+      </div>
+
+      <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+
+        
+        
+          
+        
+
+        
+        
+        <li class="nav-item">
+          <a class="nav-link js-search" href="#" aria-label="Search"><i class="fas fa-search" aria-hidden="true"></i></a>
+        </li>
+        
+
+        
+        
+        <li class="nav-item dropdown theme-dropdown">
+          <a href="#" class="nav-link" data-toggle="dropdown" aria-haspopup="true" aria-label="Display preferences">
+            <i class="fas fa-moon" aria-hidden="true"></i>
+          </a>
+          <div class="dropdown-menu">
+            <a href="#" class="dropdown-item js-set-theme-light">
+              <span>Light</span>
+            </a>
+            <a href="#" class="dropdown-item js-set-theme-dark">
+              <span>Dark</span>
+            </a>
+            <a href="#" class="dropdown-item js-set-theme-auto">
+              <span>Automatic</span>
+            </a>
+          </div>
+        </li>
+        
+
+        
+        
+
+      </ul>
+
+    </div>
+  </nav>
+</header>
+
+
+  </div>
+
+  <div class="page-body">
+    <article class="article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1>RTNETLINK 2: Fetching queueing discipline stats</h1>
+
+  
+
+  
+    
+
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    Jun 18, 2019
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    5 min read
+  </span>
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+  
+  <span class="middot-divider"></span>
+  <span class="article-categories">
+    <i class="fas fa-folder mr-1"></i><a href="/category/linux/">Linux</a></span>
+  
+
+</div>
+
+    
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style">
+      <p>Link to source code: <a href="https://github.com/sbhTWR/qdisc_stats/" target="_blank" rel="noopener">qdisc_stats</a></p>
+<h3 id="receiving-the-netlink-reply">Receiving the netlink reply</h3>
+<p style='text-align: justify;'>In the last part of this article, we learnt how to create a netlink request message for queueing discipline stats and send it. This post focuses on the next part, that is, receiving the reply to our request.
+<br>
+Receiving netlink request reply is just the reverse of creating a request message and sending it. We will use the same structs to parse our messages, as we did while sending the request, along with a few more structs to parse stats.</p>
+<p>To receive the message we will first peak over the message, using <code>MSG_PEEK</code> flag (input buffer will regard it as message not read and therefore will not discard it.), to determine its length and then allocate a buffer for it accordingly. This is to ensure optimal memory usage. The subsequent message read will then copy the contents of the message into the buffer allocated from the input buffer. (The message will be then be discarded from the input buffer). As we did with <code>sendmsg</code>, we will use <code>struct msghdr</code> to receive the message.
+<br>
+We will also need one additional flag <code>MSG_TRUNC</code>. This flag indicates that if buffer size was insufficient for receiving the data, then how much of the data was truncated. While initializing <code>struct msghdr</code>, we set the <code>iovrecv</code> (buffer) to point to NULL, so that all of the data is truncated, and the size of the data is returned by <code>recvmsg()</code>.</p>
+<pre><code class="language-c"> /* Read message from the kernel */
+
+    struct sockaddr_nl nladdr;
+    struct iovec iovrecv;
+    iovrecv.iov_base = NULL;
+    iovrecv.iov_len = 0;
+
+
+    struct msghdr msg_recv = {
+        .msg_name = &amp;nladdr,
+        .msg_namelen = sizeof(nladdr),
+        .msg_iov = &amp;iovrecv,
+        .msg_iovlen = 1,
+    };
+
+    char *buf;
+
+    /* Determine buffer length for receiving the message */
+
+    int recvlen = recvmsg(sock_fd, &amp;msg_recv, MSG_PEEK | MSG_TRUNC);
+    if (recvlen &lt; 32768)
+      recvlen = 32768;
+</code></pre>
+<p><code>recvlen</code> is the size of the memory that we need to receive the message. We allocate a buffer of size <code>recvlen</code> accordingly and initialize <code>msg_iov</code> with it.</p>
+<pre><code class="language-c">    buf = malloc(recvlen);
+
+    /* Reset the I/O vector */
+    iovrecv.iov_base = buf;
+    iovrecv.iov_len = recvlen;
+
+    /* Now receive the message */
+    recvlen = recvmsg(sock_fd, &amp;msg_recv, 0);
+</code></pre>
+<p>Next step: parse the received message!</p>
+<h3 id="parsing-the-netlink-reply">Parsing the netlink reply</h3>
+<p>RTNETLINK messages are parsed using macros defined in <a href="https://github.com/torvalds/linux/blob/master/include/uapi/linux/rtnetlink.h" target="_blank" rel="noopener"><code>linux/rtnetlink.h</code></a> (RTA_*) and <a href="https://github.com/torvalds/linux/blob/master/include/uapi/linux/netlink.h" target="_blank" rel="noopener"><code>linux/netlink.h</code></a> (NLMSG_*). For better understanding, it is suggested that the reader goes through the definition of these macros while reading this article. Macros which we are going to use for parsing the message are summarized below:</p>
+<ul>
+<li><code>NLMSG_DATA(h)</code> - defines access of netlink message payload, given pointer to netlink message header h (struct nlmsghdr *). For us, message payload is defined by   <code>struct tcmsg</code>.</li>
+<li><code>NLMSG_OK(h, msglen)</code> - boolean value, whether message length corresponding to the header is OK.</li>
+<li><code>NLMSG_NEXT(nlh, len)</code> - defines access of the netlink message (nlmsghdr) following the current message. It is assigned to a pointer of type <code>struct nlmsghdr</code>.</li>
+<li><code>TCA_RTA(tcrecv)</code> - defines access of Routing attributes, given pointer to TC message payload (<code>struct tcmsg</code>).</li>
+<li><code>RTA_NEXT(rta, len)</code> -  defines access of next Routing attribute, given pointer to current rta (<code>struct rtattr *</code>).</li>
+<li><code>RTA_OK(rta, len)</code> - boolean value, whether message length corresponding to the current routing attribute is OK.</li>
+<li><code>RTA_DATA(rta)</code> - defines access to data corresponding to the attribute header rta (<code>struct rtattr</code>).
+Using these macros, we loop through the netlink messages. For every netlink message, we loop through family headers which define queueing discipline, that is <code>struct tcmsg</code>. For each family header, we parse the stats received as attributes. These attributes (<code>struct rtattr</code>) define the data as TLV (type, length value). If you don&rsquo;t fully understand how these macros work, don&rsquo;t worry. Reading the code will make it clear.</li>
+</ul>
+<pre><code class="language-c">  struct rtattr {
+	  unsigned short	rta_len;
+	  unsigned short	rta_type;
+    /* Data follows */
+  };
+</code></pre>
+<p>Data might also be in a nested form. That isn&rsquo;t a problem because we know what kind of data we are expected beforehand. So depending on the message type we would know whether data is present in nested form or not. In our case, data is present in nested form, as we will see later in the post. For now, lets iterate through the netlink messages and parse each message (<code>nl_print_qdisc_stats()</code>):</p>
+<pre><code class="language-c">  while (NLMSG_OK(h, msglen)) {
+
+        printf (&quot;\n -------------- \n&quot;);
+        if (h-&gt;nlmsg_type == NLMSG_DONE) {
+            printf(&quot;\nDone iterating through the netlink messages&quot;);
+            break;
+        }
+
+        if (h-&gt;nlmsg_type == NLMSG_ERROR) {
+            printf(&quot;\nError message encountered!&quot;);
+            break;
+        }
+
+        /* Parse this message */
+
+        /* move to next message */  
+        h = NLMSG_NEXT(h, msglen);
+}
+</code></pre>
+<p>For each netlink message, we get the family header using <code>NLMSG_DATA(h)</code>:</p>
+<pre><code class="language-c">    struct tcmsg *tcrecv = NLMSG_DATA(h);
+</code></pre>
+<p>From the family header, we fetch the TLVs (type length values in form of <code>(struct rtattr)(rta) + (void *)(data)</code>)</p>
+<pre><code class="language-c">    struct rtattr *rta = TCA_RTA(tcrecv);
+</code></pre>
+<p>We then loop through the TLVs, which we expect to be TCA_MAX + 1 to be in number, and copy them to <code>struct rtattr tb[]</code> in the corresponding type index. (This piece of code is present in <code>nl_parse_attr()</code>).</p>
+<pre><code class="language-c">while (RTA_OK(rta, len)) {
+  type = rta-&gt;rta_type;
+  if ((type &lt;= max) &amp;&amp; (!tb[type])) {
+      tb[type] = rta;    
+  }
+
+rta = RTA_NEXT(rta, len);
+}
+</code></pre>
+<p>Data at each index of tb[] can be furthur parsed. The next few lines of code demonstrate this (Link to source code: <a href="https://github.com/sbhTWR/qdisc_stats/" target="_blank" rel="noopener">qdisc_stats</a>). I have not explained them furthur, as the process is similar and I have also approriately commented the code. Once the data has been parsed into the appropriate structs, all one needs to do is access the fields in the struct and use/display the data!</p>
+<p>If you find anything in the post that needs to be corrected or added, feel free to comment below!</p>
+
+    </div>
+
+    
+
+
+
+
+
+
+<div class="article-tags">
+  
+  <a class="badge badge-light" href="/tag/linux/">Linux</a>
+  
+</div>
+
+
+
+<div class="share-box">
+  <ul class="share">
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://twitter.com/intent/tweet?url=https://rohantwr.github.io/post/rtnetlink-2/&amp;text=RTNETLINK%202:%20Fetching%20queueing%20discipline%20stats" target="_blank" rel="noopener" class="share-btn-twitter" aria-label="twitter">
+          <i class="fab fa-twitter"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.facebook.com/sharer.php?u=https://rohantwr.github.io/post/rtnetlink-2/&amp;t=RTNETLINK%202:%20Fetching%20queueing%20discipline%20stats" target="_blank" rel="noopener" class="share-btn-facebook" aria-label="facebook">
+          <i class="fab fa-facebook"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="mailto:?subject=RTNETLINK%202:%20Fetching%20queueing%20discipline%20stats&amp;body=https://rohantwr.github.io/post/rtnetlink-2/" target="_blank" rel="noopener" class="share-btn-email" aria-label="envelope">
+          <i class="fas fa-envelope"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.linkedin.com/shareArticle?url=https://rohantwr.github.io/post/rtnetlink-2/&amp;title=RTNETLINK%202:%20Fetching%20queueing%20discipline%20stats" target="_blank" rel="noopener" class="share-btn-linkedin" aria-label="linkedin-in">
+          <i class="fab fa-linkedin-in"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="whatsapp://send?text=RTNETLINK%202:%20Fetching%20queueing%20discipline%20stats%20https://rohantwr.github.io/post/rtnetlink-2/" target="_blank" rel="noopener" class="share-btn-whatsapp" aria-label="whatsapp">
+          <i class="fab fa-whatsapp"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://service.weibo.com/share/share.php?url=https://rohantwr.github.io/post/rtnetlink-2/&amp;title=RTNETLINK%202:%20Fetching%20queueing%20discipline%20stats" target="_blank" rel="noopener" class="share-btn-weibo" aria-label="weibo">
+          <i class="fab fa-weibo"></i>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  
+  
+  
+    
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+      
+      <a href="https://rohantwr.github.io/"><img class="avatar mr-3 avatar-circle" src="/author/rohan-tiwari/avatar_hu6a17b47b905a9fc859632ee30e465658_23308_270x270_fill_q75_lanczos_center.jpg" alt="Rohan Tiwari"></a>
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="https://rohantwr.github.io/">Rohan Tiwari</a></h5>
+      <h6 class="card-subtitle">Associate at Postman API Lab</h6>
+      <p class="card-text">My research interests broadly lie in Development using APIs.</p>
+      <ul class="network-icon" aria-hidden="true">
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="/#contact" >
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://github.com/RohanTWR" target="_blank" rel="noopener">
+        <i class="fab fa-github"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://www.linkedin.com/in/rohan-tiwari-a5b588200/" target="_blank" rel="noopener">
+        <i class="fab fa-linkedin"></i>
+      </a>
+    </li>
+  
+</ul>
+
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <div class="article-widget content-widget-hr">
+    <h3>Related</h3>
+    <ul>
+      
+      <li><a href="/post/rtnetlink-1/">RTNETLINK 1: Fetching queueing discipline stats</a></li>
+      
+    </ul>
+  </div>
+  
+
+
+
+
+
+  </div>
+</article>
+  </div>
+
+  <div class="page-footer">
+    
+    
+    <div class="container">
+      <footer class="site-footer">
+
+  
+
+
+
+  
+
+  
+
+  
+  <p class="powered-by">
+    © 2023 Rohan Tiwari
+  </p>
+  
+
+  
+  
+
+
+
+
+
+
+  
+</footer>
+
+    </div>
+    
+  </div>
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+      
+
+    
+    <script src="/js/vendor-bundle.min.3d946de2e8784a477845261d87025092.js"></script>
+
+    
+    
+    
+      
+      
+        <script src="https://cdn.jsdelivr.net/gh/desandro/imagesloaded@v4.1.4/imagesloaded.pkgd.min.js" integrity="sha512-S5PZ9GxJZO16tT9r3WJp/Safn31eu8uWrzglMahDT4dsmgqWonRY9grk3j+3tfuPr9WJNsfooOR7Gi7HL5W2jw==" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/gh/metafizzy/isotope@v3.0.6/dist/isotope.pkgd.min.js" integrity="sha512-Zq2BOxyhvnRFXu0+WE6ojpZLOU2jdnqbrM1hmVdGzyeCa1DgM3X5Q4A/Is9xA1IkbUeDd7755dNNI/PzSf2Pew==" crossorigin="anonymous"></script>
+      
+
+      
+      
+
+      
+        <script src="https://cdn.jsdelivr.net/gh/mermaid-js/mermaid@v8.8.4/dist/mermaid.min.js" integrity="sha512-+TNmhaRJf3jyYHTpzEq/5I6b+aGyhzWb21mGdHAjxSGSYwxN9Grug3Y3B9qVxWfKKY8MscE/6mr9walWvFLFvQ==" crossorigin="anonymous" title="mermaid"></script>
+      
+
+      
+        
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/highlight.min.js" integrity="sha512-Ypjm0o7jOxAd4hpdoppSEN0TQOC19UtPAqD+4s5AlXmUvbmmS/YMxYqAqarQYyxTnB6/rqip9qcxlNB/3U9Wdg==" crossorigin="anonymous"></script>
+        
+        
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/languages/r.min.js" crossorigin="anonymous"></script>
+        
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/languages/python.min.js" crossorigin="anonymous"></script>
+        
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.2.1/build/languages/latex.min.js" crossorigin="anonymous"></script>
+        
+      
+
+    
+
+    
+    
+    
+      <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.min.js" integrity="" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+    
+      
+      <script id="search-hit-fuse-template" type="text/x-template">
+        <div class="search-hit" id="summary-{{key}}">
+          <div class="search-hit-content">
+            <div class="search-hit-name">
+              <a href="{{relpermalink}}">{{title}}</a>
+              <div class="article-metadata search-hit-type">{{type}}</div>
+              <p class="search-hit-description">{{snippet}}</p>
+            </div>
+          </div>
+        </div>
+      </script>
+      
+        <script src="https://cdn.jsdelivr.net/gh/krisk/Fuse@v3.2.1/dist/fuse.min.js" integrity="sha512-o38bmzBGX+hD3JHWUFCDA09btWaqrNmoJ3RXLlrysA7PP01Kgs4UlE4MhelE1v5dJR3+cxlR4qQlotsW7jKsnw==" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/gh/julmot/mark.js@8.11.1/dist/jquery.mark.min.js" integrity="sha512-mhbv5DqBMgrWL+32MmsDOt/OAvqr/cHimk6B8y/bx/xS88MVkYGPiVv2ixKVrkywF2qHplNRUvFsAHUdxZ3Krg==" crossorigin="anonymous"></script>
+      
+    
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+      
+      
+      
+      
+      
+      
+      
+    
+
+    
+
+    
+    
+    
+    <script id="page-data" type="application/json">{"use_headroom":true}</script>
+
+    
+    
+      <script src="/js/wowchemy-headroom.208bf5db800f4a4e5a38cf3b67a99a51.js" type="module"></script>
+    
+    
+    
+    
+    
+    
+    
+      
+      
+    
+    
+    <script src="/en/js/wowchemy.min.63639926e24ecfb8040ea052c1077969.js"></script>
+
+    
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+
+
+
+</body>
+</html>

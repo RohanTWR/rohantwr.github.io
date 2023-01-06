@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Linux | Rohan Tiwari</title>
+    <link>https://rohantwr.github.io/category/linux/</link>
+      <atom:link href="https://rohantwr.github.io/category/linux/index.xml" rel="self" type="application/rss+xml" />
+    <description>Linux</description>
+    <generator>Wowchemy (https://wowchemy.com)</generator><language>en-us</language><copyright>© 2023 Rohan Tiwari</copyright><lastBuildDate>Tue, 18 Jun 2019 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>https://rohantwr.github.io/media/icon_hu909bc82217815fa17390568ca6c0c0dc_2561_512x512_fill_lanczos_center_3.png</url>
+      <title>Linux</title>
+      <link>https://rohantwr.github.io/category/linux/</link>
+    </image>
+    
+    <item>
+      <title>RTNETLINK 2: Fetching queueing discipline stats</title>
+      <link>https://rohantwr.github.io/post/rtnetlink-2/</link>
+      <pubDate>Tue, 18 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>https://rohantwr.github.io/post/rtnetlink-2/</guid>
+      <description>&lt;p&gt;Link to source code: &lt;a href=&#34;https://github.com/sbhTWR/qdisc_stats/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;qdisc_stats&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&#34;receiving-the-netlink-reply&#34;&gt;Receiving the netlink reply&lt;/h3&gt;
+&lt;p style=&#39;text-align: justify;&#39;&gt;In the last part of this article, we learnt how to create a netlink request message for queueing discipline stats and send it. This post focuses on the next part, that is, receiving the reply to our request.
+&lt;br&gt;
+Receiving netlink request reply is just the reverse of creating a request message and sending it. We will use the same structs to parse our messages, as we did while sending the request, along with a few more structs to parse stats.&lt;/p&gt;
+&lt;p&gt;To receive the message we will first peak over the message, using &lt;code&gt;MSG_PEEK&lt;/code&gt; flag (input buffer will regard it as message not read and therefore will not discard it.), to determine its length and then allocate a buffer for it accordingly. This is to ensure optimal memory usage. The subsequent message read will then copy the contents of the message into the buffer allocated from the input buffer. (The message will be then be discarded from the input buffer). As we did with &lt;code&gt;sendmsg&lt;/code&gt;, we will use &lt;code&gt;struct msghdr&lt;/code&gt; to receive the message.
+&lt;br&gt;
+We will also need one additional flag &lt;code&gt;MSG_TRUNC&lt;/code&gt;. This flag indicates that if buffer size was insufficient for receiving the data, then how much of the data was truncated. While initializing &lt;code&gt;struct msghdr&lt;/code&gt;, we set the &lt;code&gt;iovrecv&lt;/code&gt; (buffer) to point to NULL, so that all of the data is truncated, and the size of the data is returned by &lt;code&gt;recvmsg()&lt;/code&gt;.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt; /* Read message from the kernel */
+
+    struct sockaddr_nl nladdr;
+    struct iovec iovrecv;
+    iovrecv.iov_base = NULL;
+    iovrecv.iov_len = 0;
+
+
+    struct msghdr msg_recv = {
+        .msg_name = &amp;amp;nladdr,
+        .msg_namelen = sizeof(nladdr),
+        .msg_iov = &amp;amp;iovrecv,
+        .msg_iovlen = 1,
+    };
+
+    char *buf;
+
+    /* Determine buffer length for receiving the message */
+
+    int recvlen = recvmsg(sock_fd, &amp;amp;msg_recv, MSG_PEEK | MSG_TRUNC);
+    if (recvlen &amp;lt; 32768)
+      recvlen = 32768;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;code&gt;recvlen&lt;/code&gt; is the size of the memory that we need to receive the message. We allocate a buffer of size &lt;code&gt;recvlen&lt;/code&gt; accordingly and initialize &lt;code&gt;msg_iov&lt;/code&gt; with it.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;    buf = malloc(recvlen);
+
+    /* Reset the I/O vector */
+    iovrecv.iov_base = buf;
+    iovrecv.iov_len = recvlen;
+
+    /* Now receive the message */
+    recvlen = recvmsg(sock_fd, &amp;amp;msg_recv, 0);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next step: parse the received message!&lt;/p&gt;
+&lt;h3 id=&#34;parsing-the-netlink-reply&#34;&gt;Parsing the netlink reply&lt;/h3&gt;
+&lt;p&gt;RTNETLINK messages are parsed using macros defined in &lt;a href=&#34;https://github.com/torvalds/linux/blob/master/include/uapi/linux/rtnetlink.h&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&lt;code&gt;linux/rtnetlink.h&lt;/code&gt;&lt;/a&gt; (RTA_*) and &lt;a href=&#34;https://github.com/torvalds/linux/blob/master/include/uapi/linux/netlink.h&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&lt;code&gt;linux/netlink.h&lt;/code&gt;&lt;/a&gt; (NLMSG_*). For better understanding, it is suggested that the reader goes through the definition of these macros while reading this article. Macros which we are going to use for parsing the message are summarized below:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;NLMSG_DATA(h)&lt;/code&gt; - defines access of netlink message payload, given pointer to netlink message header h (struct nlmsghdr *). For us, message payload is defined by   &lt;code&gt;struct tcmsg&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NLMSG_OK(h, msglen)&lt;/code&gt; - boolean value, whether message length corresponding to the header is OK.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NLMSG_NEXT(nlh, len)&lt;/code&gt; - defines access of the netlink message (nlmsghdr) following the current message. It is assigned to a pointer of type &lt;code&gt;struct nlmsghdr&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TCA_RTA(tcrecv)&lt;/code&gt; - defines access of Routing attributes, given pointer to TC message payload (&lt;code&gt;struct tcmsg&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RTA_NEXT(rta, len)&lt;/code&gt; -  defines access of next Routing attribute, given pointer to current rta (&lt;code&gt;struct rtattr *&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RTA_OK(rta, len)&lt;/code&gt; - boolean value, whether message length corresponding to the current routing attribute is OK.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RTA_DATA(rta)&lt;/code&gt; - defines access to data corresponding to the attribute header rta (&lt;code&gt;struct rtattr&lt;/code&gt;).
+Using these macros, we loop through the netlink messages. For every netlink message, we loop through family headers which define queueing discipline, that is &lt;code&gt;struct tcmsg&lt;/code&gt;. For each family header, we parse the stats received as attributes. These attributes (&lt;code&gt;struct rtattr&lt;/code&gt;) define the data as TLV (type, length value). If you don&amp;rsquo;t fully understand how these macros work, don&amp;rsquo;t worry. Reading the code will make it clear.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;  struct rtattr {
+	  unsigned short	rta_len;
+	  unsigned short	rta_type;
+    /* Data follows */
+  };
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Data might also be in a nested form. That isn&amp;rsquo;t a problem because we know what kind of data we are expected beforehand. So depending on the message type we would know whether data is present in nested form or not. In our case, data is present in nested form, as we will see later in the post. For now, lets iterate through the netlink messages and parse each message (&lt;code&gt;nl_print_qdisc_stats()&lt;/code&gt;):&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;  while (NLMSG_OK(h, msglen)) {
+
+        printf (&amp;quot;\n -------------- \n&amp;quot;);
+        if (h-&amp;gt;nlmsg_type == NLMSG_DONE) {
+            printf(&amp;quot;\nDone iterating through the netlink messages&amp;quot;);
+            break;
+        }
+
+        if (h-&amp;gt;nlmsg_type == NLMSG_ERROR) {
+            printf(&amp;quot;\nError message encountered!&amp;quot;);
+            break;
+        }
+
+        /* Parse this message */
+
+        /* move to next message */  
+        h = NLMSG_NEXT(h, msglen);
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;For each netlink message, we get the family header using &lt;code&gt;NLMSG_DATA(h)&lt;/code&gt;:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;    struct tcmsg *tcrecv = NLMSG_DATA(h);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;From the family header, we fetch the TLVs (type length values in form of &lt;code&gt;(struct rtattr)(rta) + (void *)(data)&lt;/code&gt;)&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;    struct rtattr *rta = TCA_RTA(tcrecv);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We then loop through the TLVs, which we expect to be TCA_MAX + 1 to be in number, and copy them to &lt;code&gt;struct rtattr tb[]&lt;/code&gt; in the corresponding type index. (This piece of code is present in &lt;code&gt;nl_parse_attr()&lt;/code&gt;).&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;while (RTA_OK(rta, len)) {
+  type = rta-&amp;gt;rta_type;
+  if ((type &amp;lt;= max) &amp;amp;&amp;amp; (!tb[type])) {
+      tb[type] = rta;    
+  }
+
+rta = RTA_NEXT(rta, len);
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Data at each index of tb[] can be furthur parsed. The next few lines of code demonstrate this (Link to source code: &lt;a href=&#34;https://github.com/sbhTWR/qdisc_stats/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;qdisc_stats&lt;/a&gt;). I have not explained them furthur, as the process is similar and I have also approriately commented the code. Once the data has been parsed into the appropriate structs, all one needs to do is access the fields in the struct and use/display the data!&lt;/p&gt;
+&lt;p&gt;If you find anything in the post that needs to be corrected or added, feel free to comment below!&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>RTNETLINK 1: Fetching queueing discipline stats</title>
+      <link>https://rohantwr.github.io/post/rtnetlink-1/</link>
+      <pubDate>Mon, 17 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>https://rohantwr.github.io/post/rtnetlink-1/</guid>
+      <description>&lt;p&gt;Link to source code: &lt;a href=&#34;https://github.com/sbhTWR/qdisc_stats/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;qdisc_stats&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This article mainly focuses on the implementation part of using RTNETLINK to fetch queueing discipline statistics from the kernel. There are many good articles that cover basics of NETLINK and RTNETLINK in detail. Few of them are listed at the end of this article.&lt;/p&gt;
+&lt;h2 id=&#34;rtnetlink&#34;&gt;RTNETLINK&lt;/h2&gt;
+&lt;p&gt;RTNETLINK is an extension of NETLINK that allows userspace applications to manipulate linux&amp;rsquo;s networking stack which is located in the kernel. Userspace applications can fetch routing information and modify kernels internel routing table using RTNETLINK. I came accross RTNETLINK while working with Open vSwitch (OVS). OVS uses RTNETLINK for communication between its userspace process vswitchd and its kernel module (called datapath). OVS also uses it to fetch queueing discipline statistics from the kernel and to modify them.&lt;/p&gt;
+&lt;h2 id=&#34;implementation&#34;&gt;Implementation&lt;/h2&gt;
+&lt;p&gt;While working on a project on SDN, I needed to extend the functionality of OVS so as to provide us with queueing discipline stats that we need. For this purpose I read a lot of articles on NETLINK and RTNETLINK, but I couldn&amp;rsquo;t find any which explained how to communicate with Traffic Controller (tc). Since iproute2 is a userspace utility that does exactly what I needed (it queries kernel using RTNETLINK to fetch stats), I thought of figuring it out by reading its source code. Consequently, a lot of code that I am going to present in this article is inspired by &lt;a href=&#34;https://github.com/shemminger/iproute2&#34;&gt;iproute2 &lt;/a&gt;.&lt;/p&gt;
+&lt;h3 id=&#34;netlink-socket&#34;&gt;Netlink socket&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/torvalds/linux/blob/9e0babf2c06c73cda2c0cd37a1653d823adb40ec/include/uapi/linux/netlink.h#L37&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&amp;lt;linux/rtnetlink.h&amp;gt;&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;/* defined in &amp;lt;linux/rtnetlink.h&amp;gt; */
+
+ struct sockaddr_nl {
+    __kernel_sa_family_t    nl_family;  /* AF_NETLINK	*/
+    unsigned short          nl_pad;     /* zero		*/
+    __u32                   nl_pid;     /* port ID	*/
+    __u32                   nl_groups;  /* multicast groups mask */
+ }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;message-format&#34;&gt;Message format&lt;/h3&gt;
+&lt;p&gt;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&lt;figure  id=&#34;figure-fig-1-request-message-format&#34;&gt;
+  &lt;div class=&#34;d-flex justify-content-center&#34;&gt;
+    &lt;div class=&#34;w-100&#34; &gt;&lt;img src=&#34;../../uploads/req_msg_format.png&#34; alt=&#34;Request message format&#34; loading=&#34;lazy&#34; data-zoomable /&gt;&lt;/div&gt;
+  &lt;/div&gt;&lt;figcaption&gt;
+      Fig 1. Request message format
+    &lt;/figcaption&gt;&lt;/figure&gt;
+&lt;/p&gt;
+&lt;p&gt;Netlink message header is represented by &lt;code&gt;struct nlmsghdr&lt;/code&gt; (given below). &lt;code&gt;nlmsg_len&lt;/code&gt; is &lt;code&gt;sizeof(struct nlmsghdr) + sizeof(message struct)&lt;/code&gt;. Choice of message struct depends on the type of message that we are creating. In our case we are requesting the queueing discipline details, so the appropriate struct is &lt;code&gt;struct tcmsg&lt;/code&gt; (given below). So for us &lt;code&gt;nlmsglen = sizeof(struct nlmsghdr) + sizeof(struct tcmsg)&lt;/code&gt;.
+&lt;br&gt;&lt;br&gt;
+&lt;code&gt;nlmsg_type&lt;/code&gt; describes the type of message, which in our case is &lt;code&gt;RTM_GETQDISC&lt;/code&gt;. A detailed documentation about the types of messages and their respective flags is given &lt;a href=&#34;http://man7.org/linux/man-pages/man7/rtnetlink.7.html&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;here&lt;/a&gt;.
+&lt;br&gt;&lt;br&gt;
+&lt;code&gt;nlmsg_flags&lt;/code&gt; are flags which furthur describe the message, for example whether it is a dump request or not. In our case, due to a bug in the kernel, we are going to create a dump request (This will be explained later in the post) &lt;code&gt;nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST&lt;/code&gt;.&lt;br&gt;
+&lt;br&gt;&lt;br&gt;
+&lt;code&gt;nlmsg_seq&lt;/code&gt; yet to research more about this. (I have not completed the networking course yet!).
+&lt;br&gt;&lt;br&gt;
+&lt;code&gt;nlmsg_pid&lt;/code&gt; is the netlink PID of the process sending the message. I kept this empty, and it worked. I still need to figure out more about it!&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/torvalds/linux/blob/9e0babf2c06c73cda2c0cd37a1653d823adb40ec/include/uapi/linux/netlink.h#L44&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&amp;lt;linux/netlink.h&amp;gt;&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;/* defined in &amp;lt;linux/netlink.h&amp;gt; */  
+
+struct nlmsghdr {
+	__u32		nlmsg_len;	/* Length of message including header */
+	__u16		nlmsg_type;	/* Message content */
+	__u16		nlmsg_flags;	/* Additional flags */
+	__u32		nlmsg_seq;	/* Sequence number */
+	__u32		nlmsg_pid;	/* Sending process port ID */
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We are done creating the netlink message header. Our next task is to create the message content using &lt;code&gt;struct tcmsg&lt;/code&gt; (given below for reference).
+&lt;br&gt;&lt;br&gt;
+&lt;code&gt;tcm_family&lt;/code&gt; is traffic controller message family, described in &lt;a href=&#34;https://github.com/torvalds/linux/blob/master/include/linux/socket.h&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;sockets.h&lt;/a&gt;.
+In our case it is equal to &lt;code&gt;AF_UNSPEC&lt;/code&gt;. I couldn&amp;rsquo;t find any documentation related to this address family, but it seems like its Address Family Unspecified - which I assume implies that it is not required in this case. (Will update the post when if I find out. If you happen to know about it, please comment below!).
+&lt;br&gt;&lt;br&gt;
+&lt;code&gt;tcm__pad1&lt;/code&gt; and &lt;code&gt;tcm__pad2&lt;/code&gt; are pads to make sure that data is algined in the memory. This avoids any alignment errors while parsing a received RTNETLINK message. More about it &lt;a href=&#34;https://fresh2refresh.com/c-programming/c-structure-padding/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;here&lt;/a&gt;.
+&lt;br&gt;&lt;br&gt;
+&lt;code&gt;tcm_ifindex&lt;/code&gt; is the index of the interface whos queueing discipline information we are requesting. Interface index can be obtained from the interface name using &lt;code&gt;unsigned int if_nametoindex(const char *ifname)&lt;/code&gt; defined in &lt;code&gt;net/if.h&lt;/code&gt;. Interface name can be obtained from interface index using &lt;code&gt;char *if_indextoname(unsigned int ifindex, char *ifname)&lt;/code&gt;. More about these functions &lt;a href=&#34;https://linux.die.net/man/3/if_indextoname&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;here&lt;/a&gt;. Since we are requesting a dump of qdiscs of all the interfaces, this field doesn&amp;rsquo;t matter. To make a qdisc info request for a particular interface, this field needs to be filled in with the interface index of the interface we are requesting for. (This specific request does not work due to a bug in the kernel which will be explained in the post later).&lt;/p&gt;
+&lt;p&gt;Example: converting interface name to index and vice-versa:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;/* obtain iface index from iface name */
+
+char d[IFNAMSIZ] = {};
+    strncpy(d, &amp;quot;enp7s0&amp;quot;, sizeof(d)-1);
+
+    if (d[0]) {
+        t.tcm_ifindex = if_nametoindex(d);
+}
+
+/* obtain iface name from iface index */
+char d[IFNAMSIZ] = {};
+printf(&amp;quot;dev %s&amp;quot;, if_indextoname(tcrecv-&amp;gt;tcm_ifindex, d));
+&lt;/code&gt;&lt;/pre&gt;
+&lt;br&gt;
+&lt;p&gt;&lt;code&gt;tcm_handle&lt;/code&gt; and &lt;code&gt;tcm_parent&lt;/code&gt; fields are used to make a more specific request, when the queueing discipline attached to the interface(s) is classful. In our case we are making a dump request, so it does not matter for us. Read more about classless and classful queueing disciplines &lt;a href=&#34;https://www.tldp.org/HOWTO/Adv-Routing-HOWTO/lartc.qdisc.terminology.html&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/torvalds/linux/blob/9e0babf2c06c73cda2c0cd37a1653d823adb40ec/include/uapi/linux/rtnetlink.h#L552&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&amp;lt;linux/rtnetlink.h&amp;gt;&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;/* defined in &amp;lt;linux/rtnetlink.h&amp;gt; */
+struct tcmsg {
+	unsigned char	tcm_family;
+	unsigned char	tcm__pad1;
+	unsigned short	tcm__pad2;
+	int		tcm_ifindex;
+	__u32		tcm_handle;
+	__u32		tcm_parent;
+/* tcm_block_index is used instead of tcm_parent
+ * in case tcm_ifindex == TCM_IFINDEX_MAGIC_BLOCK
+ */
+#define tcm_block_index tcm_parent
+	__u32		tcm_info;
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We are done with the request message. What remains is to create the netlink message header by filling in the fields of &lt;code&gt;struct msghdr&lt;/code&gt; (given below).
+&lt;br&gt;&lt;br&gt;
+&lt;code&gt;msg_name&lt;/code&gt; points to &lt;code&gt;struct sockaddr_nl&lt;/code&gt; filled in with the destination address and &lt;code&gt;msg_namelen = sizeof(struct sockaddr_nl)&lt;/code&gt;.
+&lt;br&gt;&lt;br&gt;
+&lt;code&gt;msg_iov&lt;/code&gt; is an array of input/output vectors (called I/O vectors). It is used for reading and writing data from/to buffers which are not neccesarily in contiguous memory locations &lt;a href=&#34;https://stackoverflow.com/questions/32593697/understanding-the-msghdr-structure-from-sys-socket-h&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;[1]&lt;/a&gt;.
+We write netlink message header(struct nlmshhdr) and request message (struct tcmsg) at array index 0 and 1 of &lt;code&gt;iov&lt;/code&gt; in the following way:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;struct tcmsg t = { .tcm_family = AF_UNSPEC };
+    char d[IFNAMSIZ] = {};
+    strncpy(d, &amp;quot;enp7s0&amp;quot;, sizeof(d)-1);
+
+    if (d[0]) {
+        t.tcm_ifindex = if_nametoindex(d);
+    }
+
+void *req = (void *)&amp;amp;t;
+
+int type = RTM_GETQDISC;
+int len = sizeof(t);
+
+struct nlmsghdr nlh = {
+    .nlmsg_len = NLMSG_LENGTH(len),
+    .nlmsg_type = type,
+    .nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
+    .nlmsg_seq = 0,
+};
+
+
+struct iovec iov[2] = {
+    { .iov_base = &amp;amp;nlh, .iov_len = sizeof(nlh) },
+    { .iov_base = req, .iov_len = len }
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&lt;figure  id=&#34;figure-fig-2-diagramatic-representation-filling-in-of-netlink-message-as-an-io-vector-array-of-size-2&#34;&gt;
+  &lt;div class=&#34;d-flex justify-content-center&#34;&gt;
+    &lt;div class=&#34;w-100&#34; &gt;&lt;img src=&#34;../../uploads/iovec.png&#34; alt=&#34;Request message format&#34; loading=&#34;lazy&#34; data-zoomable /&gt;&lt;/div&gt;
+  &lt;/div&gt;&lt;figcaption&gt;
+      Fig 2. Diagramatic representation: filling in of netlink message as an i/o vector array of size 2
+    &lt;/figcaption&gt;&lt;/figure&gt;
+&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;msg_iovlen = 2&lt;/code&gt;, since it is an array of size 2. Rest of the fields in &lt;code&gt;struct msghdr&lt;/code&gt; is not needed for our purpose. If you know what purpose these data fields serve, please comment about it below, and I will add it to the post!&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;/* defined in &amp;lt;bits/socket.h&amp;gt; */
+
+ /* Structure describing messages sent by
+   `sendmsg&#39; and received by `recvmsg&#39;.  */
+struct msghdr
+  {
+    void *msg_name;		/* Address to send to/receive from.  */
+    socklen_t msg_namelen;	/* Length of address data.  */
+
+    struct iovec *msg_iov;	/* Vector of data to send/receive into.  */
+    size_t msg_iovlen;		/* Number of elements in the vector.  */
+
+    void *msg_control;		/* Ancillary data (eg BSD filedesc passing). */
+    size_t msg_controllen;	/* Ancillary data buffer length.
+				   !! The type should be socklen_t but the
+				   definition of the kernel is incompatible
+				   with this.  */
+
+    int msg_flags;		/* Flags on received message.  */
+  };
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We are almost done with creating the message header (&lt;code&gt;struct msghdr&lt;/code&gt;). What remains is filling in the fields of &lt;code&gt;struct sockaddr_nl&lt;/code&gt; with the destination address (kernel), assign it to &lt;code&gt;msg_name&lt;/code&gt; and its size to &lt;code&gt;msg_namelen&lt;/code&gt;.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;struct sockaddr_nl dst_addr;
+
+    memset(&amp;amp;dst_addr, 0, sizeof(dst_addr));
+    dst_addr.nl_family = AF_NETLINK;
+    dst_addr.nl_pid = 0; /* For linux kernel */
+    dst_addr.nl_groups = 0; /* unicast */
+
+   /* struct msghdr {
+        void *msg_name;        //Address to send to
+        socklen_t msg_namelen; //Length of address data
+        struct iovec *msg_iov; //Vector of data to send
+        size_t msg_iovlen;     //Number of iovec entries
+        void *msg_control;     //Ancillary data
+        size_t msg_controllen; //Ancillary data buf len
+        int msg_flags;         //Flags on received msg
+    };
+*/
+
+    struct msghdr msg = {
+        .msg_name = &amp;amp;dst_addr,
+        .msg_namelen = sizeof(dst_addr),
+        .msg_iov = iov,
+        .msg_iovlen = 2,
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We are now ready with our message. All we need to do now is simply send the message through the netlink socket that we created earlier, using &lt;code&gt;sendmsg()&lt;/code&gt;:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-c&#34;&gt;sendmsg(sock_fd, &amp;amp;msg, 0);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;the-no-reply-kernel-bug-or-maybe-bug-in-my-code&#34;&gt;The &amp;ldquo;no-reply&amp;rdquo; kernel bug (or maybe bug in my code?)&lt;/h3&gt;
+&lt;p&gt;As I said earlier in the post, requesting a specific queueing discipline, there is &amp;ldquo;no reply&amp;rdquo; from the kernel. As such, recvmsg() function enters a blocking state, since no reply is received. Hence, we made a dump request, which works. I am still unsure whether this is because of a problem in my code or because of the bug in the kernel. I tried looking around for a fix, and found out that developers of Open vSwitch had experienced similar problem: &lt;a href=&#34;https://mail.openvswitch.org/pipermail/ovs-dev/2015-March/295937.html&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Link&lt;/a&gt;. If you find out a bug in my code, feel free to contact me or comment below.&lt;/p&gt;
+&lt;p&gt;Link to source code: &lt;a href=&#34;https://github.com/sbhTWR/qdisc_stats/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;qdisc_stats&lt;/a&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;https://stackoverflow.com/questions/32593697/understanding-the-msghdr-structure-from-sys-socket-h&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;https://stackoverflow.com/questions/32593697/understanding-the-msghdr-structure-from-sys-socket-h&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
