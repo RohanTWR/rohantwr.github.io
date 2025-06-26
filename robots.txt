@@ -1,0 +1,3 @@
+User-agent: *
+
+Sitemap: https://rohantwr.github.io/sitemap.xml
